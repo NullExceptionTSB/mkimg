@@ -22,7 +22,7 @@ void image_new_buffer(image* img, size_t buffersz) {
 
 void image_new_buffer_chs(image* img, chs chs_sz) {
     memcpy(&(img->image_size_chs), &chs_sz, sizeof(chs));
-    img->image_size = chs_sz.cylinder*chs_sz.head*chs_sz.spt;
+    img->image_size = chs_sz.cylinder*chs_sz.head*chs_sz.spt*512;
     if (img->image_buffer) free(img->image_buffer);
 
     void* buffer = malloc(img->image_size);

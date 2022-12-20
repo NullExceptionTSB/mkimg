@@ -35,7 +35,7 @@ bpb16* fat12_write_bpb_direct(image* img) {
     bpb->rootDirEntries = 224; //FLOPPY ONLY! HARD DRIVES USE 512
     bpb->totalSectors = img->image_size/bpb->bytesPerSector;
     bpb->mediaDescriptor = 0xF0; //FLOPPY ONLY!
-    bpb->sectorsPerFat = fat12_stub_value();
+    
 
     bpb->sectorsPerTrack = img->image_size_chs.spt;
     bpb->heads = img->image_size_chs.head;
@@ -50,6 +50,12 @@ bpb16* fat12_write_bpb_direct(image* img) {
     memcpy(bpb->filesystem, "FAT12   ", 8);
 
     memcpy(img->image_buffer, bpb, sizeof(bpb16));
+
+    bpb->sectorsPerFat = fat12_calc_sectors_per_fat(bpb);
+    if (bpb->sectorsPerFat == -1) {
+        puts("F: Stub reached");
+        exit(-1);
+    }
     return bpb;
 }
 

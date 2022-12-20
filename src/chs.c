@@ -25,7 +25,7 @@ chs chs_lba_to_chs_addr(size_t lba, void* imge) {
 }
 
 size_t chs_chs_to_lba_size(chs size) {
-    return (size.cylinder*size.head*size.spt);
+    return (size.cylinder*size.head*size.spt*512);
 }
 
 size_t chs_chs_to_lba_addr(chs addr, void* imge) { 

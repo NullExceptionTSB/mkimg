@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>  
-#include <io.h>
 
+#include <io.h>
 #include <mbr.h>
 #include <fail.h>
 #include <chs.h>
@@ -61,6 +61,5 @@ int mbr_mkpartition(char* image, chs chs_start, chs chs_end, int part_index) {
     image_mbr->partitionTable[part_index].endH = chs_end.head;
     image_mbr->partitionTable[part_index].endS = chs_end.sector;
 
-    image_mbr->partitionTable[part_index].partflag = partflag_active;
-    
+    image_mbr->partitionTable[part_index].partflag = partflag_active;   
 }

@@ -36,7 +36,7 @@ int arg_process_template(mkimg_args* pargs, int template) {
     switch (template) {
         case 1:
             pargs->create_sz_heads = 2;
-            pargs->create_sz_cylinders = 2880/18;
+            pargs->create_sz_cylinders = 1440/18;
             pargs->create_sz_spt = 18;
             pargs->create_sz_lba = 2880*512;
             pargs->create_sizemode = CHS;
