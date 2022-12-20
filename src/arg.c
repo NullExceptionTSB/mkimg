@@ -10,11 +10,12 @@ static struct argp_option options[] = {
     {"create", 'c', 0, 0, "Creates a new image", 0},
     {"add", 'a', 0, 0, "Adds a file", 0},
 
-    {"cylinders", 'C', "cylinders", 0, "Cylinder count, incompatible with -s", 1},
-    {"heads", 'H', "heads", 0, "Head count, incompatible with -s", 1},
-    {"sectors", 'S', "sectors", 0, "Sectors per cylinder, incompatible with -s", 1},
+    {"template", 't', "template-num", 0, "Create using template (see man mkimg)"},
+    {"cylinders", 'C', "cylinders", 0, "Cylinder count, incompatible with -s, -t", 1},
+    {"heads", 'H', "heads", 0, "Head count, incompatible with -s, -t", 1},
+    {"sectors", 'S', "sectors", 0, "Sectors per cylinder, incompatible with -s, -t", 1},
 
-    {"size", 's', "size", 0, "LBA in sectors, incompatible with -C, -H, -S", 2},
+    {"size", 's', "size", 0, "LBA in sectors, incompatible with -C, -H, -S, -t", 2},
 
     {"out", 'o', "outfile", 0, "Output image file, mandatory in create mode", 3},
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
@@ -29,6 +30,19 @@ void arg_delimit_sizemode(mkimg_sizemode sizemode, mkimg_args* pargs, struct arg
         argp_usage(state);
     else
         pargs->create_sizemode = sizemode;
+}
+
+int arg_process_template(mkimg_args* pargs, int template) {
+    switch (template) {
+        case 1:
+            pargs->create_sz_heads = 2;
+            pargs->create_sz_cylinders = 2880/18;
+            pargs->create_sz_spt = 18;
+            pargs->create_sz_lba = 2880*512;
+            pargs->create_sizemode = CHS;
+            return 1;
+        default: return 0;
+    }
 }
 
 static error_t parse_opt(int key, char* arg, struct argp_state* state) {
@@ -50,19 +64,32 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
         case 'a':
             puts("F: Not supported");
             break;
+        case 't':
+            pargs->create_template = 1;
+            if (!arg_process_template(pargs, strtol(arg, NULL, 10)))
+                arg_fail("F: Invalid template");
+            break;
         case 'C':
+            if (pargs->create_template)
+                arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
             pargs->create_sz_cylinders = strtol(arg, NULL, 10);
             break;
         case 'H':
+            if (pargs->create_template)
+                arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
             pargs->create_sz_heads = strtol(arg, NULL, 10);
             break;
         case 'S':
+            if (pargs->create_template)
+                arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
-            pargs->create_sz_sectors = strtol(arg, NULL, 10);
+            pargs->create_sz_spt = strtol(arg, NULL, 10);
             break;
         case 's':
+            if (pargs->create_template)
+                arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(LBA, pargs, state);
             pargs->create_sz_lba = strtol(arg, NULL, 10);
             break;
@@ -94,7 +121,7 @@ void arg_lint(mkimg_args* args) {
                 case CHS:
                     if (args->create_sz_cylinders <= 0 || 
                         args->create_sz_heads <= 0 ||
-                        args->create_sz_sectors <= 0)
+                        args->create_sz_spt <= 0)
                         arg_fail("F: Incomplete or invalid CHS size specified");
                     break;
                 case LBA:
@@ -121,7 +148,6 @@ mkimg_args* arg_parse(int argc, char* argv[]) {
     argp_struct->parser = parse_opt;
 
     error_t parsecode = argp_parse(argp_struct, argc, argv, 0, NULL, args);
-    
     arg_lint(args);
 
     free(argp_struct);

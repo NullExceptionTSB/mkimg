@@ -14,11 +14,11 @@ int fat12_calc_sectors_per_fat(bpb16* bpb) {
     //generic values
     switch (bpb->totalSectors) {
         case 2880: return 9;
+        //todo: expand
     }
 
     //calculate if undefined
     return -1; //stub
-
 }
 
 void fat12_relabel(bpb16* bpb, char* newlabel) {

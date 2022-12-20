@@ -23,9 +23,10 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     char* outfile;
     char* infile;
 
+    int create_template;
     int create_sz_cylinders;
     int create_sz_heads;
-    int create_sz_sectors;
+    int create_sz_spt;
     int create_sz_lba;
     mkimg_sizemode create_sizemode;
     mkimg_filesystem create_desiredfs;
@@ -34,3 +35,4 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
 } mkimg_args;
 
 mkimg_args* arg_parse(int argc, char* argv[]);
+void arg_fail(char* msg);

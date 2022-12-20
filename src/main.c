@@ -21,7 +21,7 @@ void mode_create(mkimg_args* args) {
         chs chssz;
         chssz.cylinder = args->create_sz_cylinders;
         chssz.head = args->create_sz_heads;
-        chssz.spt = args->create_sz_sectors;
+        chssz.spt = args->create_sz_spt;
         image_new_buffer_chs(img, chssz);
     }
     
