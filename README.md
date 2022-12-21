@@ -7,9 +7,11 @@ OSDev Image Builder Tool\
 - Open-source
 - Platform independent
 - Root not required
-<br>
-**USAGE:** <br>
+
+ 
+## Usage
 todo:write <br>
-<br>
-**COMPILATION INSTRUCTIONS:** <br>
+
+
+## COMPILATION INSTRUCTIONS:
 todo:write <br>
