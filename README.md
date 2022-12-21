@@ -8,8 +8,8 @@ OSDev Image Builder Tool\
 - Platform independent
 - Root not required
 <br>
-**USAGE:**<br>
-todo:write\
+**USAGE:** <br>
+todo:write <br>
 <br>
-**COMPILATION INSTRUCTIONS:**<br>
-todo:write
+**COMPILATION INSTRUCTIONS:** <br>
+todo:write <br>
