@@ -40,6 +40,7 @@ int arg_process_template(mkimg_args* pargs, int template) {
             pargs->create_sz_spt = 18;
             pargs->create_sz_lba = 2880*512;
             pargs->create_sizemode = CHS;
+            pargs->create_desiredfs = FSFAT12;
             return 1;
         default: return 0;
     }

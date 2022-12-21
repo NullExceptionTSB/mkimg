@@ -40,7 +40,6 @@ void mode_create(mkimg_args* args) {
         chssz.spt = args->create_sz_spt;
         image_new_buffer_chs(img, chssz);
     }
-    
     mbr_init(img->image_buffer, img->image_size);
     format(args, img);
     io_write_file(args->outfile, img->image_buffer, img->image_size);

@@ -54,23 +54,22 @@ bpb16* fat12_write_bpb_direct(image* img) {
     fat12_relabel(bpb, "NOLABEL");
     memcpy(bpb->filesystem, "FAT12   ", 8);
 
-    memcpy(img->image_buffer, bpb, sizeof(bpb16));
-
     bpb->sectorsPerFat = fat12_calc_sectors_per_fat(bpb);
+
     if (bpb->sectorsPerFat == -1) {
         puts("F: Stub reached");
         exit(-1);
     }
+    memcpy(img->image_buffer, bpb, sizeof(bpb16));
     return bpb;
 }
 
 void fat12_puttables(char* ptr, int table_size_sectors, int num_tables) {
     memset(ptr, 0, table_size_sectors*512*num_tables);
-
     for (int i = 0; i < num_tables; i++) {
-        (ptr+(table_size_sectors*i))[0] = 0xF0;
-        (ptr+(table_size_sectors*i))[1] = 0xFF;
-        (ptr+(table_size_sectors*i))[2] = 0xFF;
+        (ptr+(table_size_sectors*512*i))[0] = 0xF0;
+        (ptr+(table_size_sectors*512*i))[1] = 0xFF;
+        (ptr+(table_size_sectors*512*i))[2] = 0xFF;   
     }
 }
 
@@ -92,7 +91,8 @@ void fat12_format(image* img) {
                 bpb_16->sectorsPerFat, bpb_16->numFats);
             fat12_putroot(img->image_buffer + 
                 bpb_16->reservedSectors*bpb_16->bytesPerSector+
-                bpb_16->sectorsPerFat*bpb_16->numFats, 224);
+                bpb_16->sectorsPerFat*bpb_16->numFats*bpb_16->bytesPerSector,
+                224);
             break;
         default:
             puts("F: Unsupported partition type, cannot format");

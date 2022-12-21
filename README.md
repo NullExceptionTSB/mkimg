@@ -5,8 +5,8 @@ OSDev Image Builder Tool\
 - Written in C99
 - Image creation wtih both LBA and CHS parameters
 - Open-source
-- Platform independent
-- Root not required
+- Platform independent (Windows via MSYS2)
+- Root access and mounting not required
 
  
 ## Usage
