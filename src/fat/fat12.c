@@ -85,7 +85,9 @@ void fat12_format(image* img) {
             fat12_puttables(img->image_buffer + 
                 bpb->reservedSectors*bpb->bytesPerSector,
                 bpb->sectorsPerFat, bpb->numFats);
-
+            fat12_putroot(img->image_buffer + 
+                bpb->reservedSectors*bpb->bytesPerSector+
+                bpb->sectorsPerFat*bpb->numFats, 224);
             break;
         default:
             puts("F: Unsupported partition type, cannot format");

@@ -1,14 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <filesystem.h>
 #include <io.h>
 #include <arg.h>
 #include <image.h>
+
 #include <create/mbr.h>
+
+#include <fs/fat12.h>
 
 void fail(char* msg) {
     puts(msg);
     exit(-1);
+}
+
+void format(mkimg_args* args, image* img) {
+    switch(args->create_desiredfs) {
+        case FSAuto:
+            puts("AutoFS not supported");
+            break;
+        case FSFAT12:
+            fat12_format(img);
+            break;
+        default: puts("Filesystem not supported");
+    }
 }
 
 void mode_create(mkimg_args* args) {
@@ -26,6 +42,7 @@ void mode_create(mkimg_args* args) {
     }
     
     mbr_init(img->image_buffer, img->image_size);
+    format(args, img);
     io_write_file(args->outfile, img->image_buffer, img->image_size);
 }
 
