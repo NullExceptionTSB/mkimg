@@ -30,7 +30,7 @@ void image_new_buffer_chs(image* img, chs chs_sz) {
 }
 
 void image_detect(image* img) {
-    img->image_file_system = NONE;
+    img->image_file_system = FSNone;
     img->image_partition_table = PARTTYPE_NONE;
 }
 

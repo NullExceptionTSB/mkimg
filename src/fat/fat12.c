@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <arg.h>
 #include <fat.h>
@@ -22,7 +23,11 @@ int fat12_calc_sectors_per_fat(bpb16* bpb) {
 }
 
 void fat12_relabel(bpb16* bpb, char* newlabel) {
-    memcpy(bpb->label, newlabel, strnlen(newlabel, 11));
+    //strnlen is not in C99
+    int len = strlen(newlabel);
+    len = len>11?11:len;
+
+    memcpy(bpb->label, newlabel, len);
 }
 
 bpb16* fat12_write_bpb_direct(image* img) {
@@ -78,16 +83,16 @@ void fat12_format(image* img) {
         puts("F: Image too small");
         return;
     }
-
+    bpb16* bpb_16;
     switch (img->image_partition_table) {
         case PARTTYPE_NONE:
-            bpb16* bpb = fat12_write_bpb_direct(img->image_buffer);
+            bpb_16 = fat12_write_bpb_direct(img);
             fat12_puttables(img->image_buffer + 
-                bpb->reservedSectors*bpb->bytesPerSector,
-                bpb->sectorsPerFat, bpb->numFats);
+                bpb_16->reservedSectors*bpb_16->bytesPerSector,
+                bpb_16->sectorsPerFat, bpb_16->numFats);
             fat12_putroot(img->image_buffer + 
-                bpb->reservedSectors*bpb->bytesPerSector+
-                bpb->sectorsPerFat*bpb->numFats, 224);
+                bpb_16->reservedSectors*bpb_16->bytesPerSector+
+                bpb_16->sectorsPerFat*bpb_16->numFats, 224);
             break;
         default:
             puts("F: Unsupported partition type, cannot format");

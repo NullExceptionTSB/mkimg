@@ -10,8 +10,15 @@ OSDev Image Builder Tool\
 
  
 ## Usage
-todo:write <br>
+For basic usage instructions, run `mkimg --help`<br>
+### Templates
+This is a list for current templates supported by the `-t/--template` option:\
+- 1 = 1.44MiB 3.5' Floppy Drive
+- - 2 heads per cylinder
+- - 18 sectors per track
+- - FAT12, 9 sectors per FAT, 2 FATs
 
 
 ## COMPILATION INSTRUCTIONS:
-todo:write <br>
+TO COMPILE: `make`, executable will be outputted in project root directory\
+TO INSTALL: `make install`, CURRENTLY DOES NOT WORK!!!

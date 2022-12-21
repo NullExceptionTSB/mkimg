@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem.h>
 
 typedef enum _MKIMG_ARGUMENT_MODE {
     MODE_UNDECIDED, create, cpfile, rmfile
@@ -7,10 +8,6 @@ typedef enum _MKIMG_ARGUMENT_MODE {
 typedef enum _MKIMG_SIZE_MODE {
     SIZEMODE_UNDECIDED, CHS, LBA
 } mkimg_sizemode;
-
-typedef enum _MKIMG_ARGUMENT_FILESYSTEM {
-    NONE, FAT12, FAT16, FAT32, NTFS
-} mkimg_filesystem;
 
 typedef enum _MKIMG_DESIRED_PARTITION_TYPE {
     PARTTYPE_UNDECIDED, PARTTYPE_NONE, PARTTYPE_MBR, PARTTYPE_GPT
