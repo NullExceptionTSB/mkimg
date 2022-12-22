@@ -19,7 +19,7 @@ mbr:
 	nasm asm/bldr_stub_mbr.asm -o mbr/mbrstub.bin
 
 build:
-	-@mkdir mkdir build
+	-@mkdir build
 
 install:
 	@echo Install currently not supported
