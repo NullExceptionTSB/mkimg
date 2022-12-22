@@ -22,7 +22,9 @@ build:
 	-@mkdir build
 
 install:
-	@echo Install currently not supported
+	cp -f mkimg /usr/bin/mkimg
+	-@mkdir /usr/share/mkimg 2>&1 > /dev/null | true
+	cp -fr mbr /usr/share/mkimg
 
 .PHONY: clean all
 clean:
