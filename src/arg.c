@@ -98,6 +98,10 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             pargs->outfile = malloc(strlen(arg)+1);
             strcpy(pargs->outfile, arg);
             break;
+        case 'i':
+            pargs->infile = malloc(strlen(arg)+1);
+            strcpy(pargs->infile, arg);
+            break;
         case ARGP_KEY_END:
             if (pargs->mode == MODE_UNDECIDED)
                 argp_usage(state);
