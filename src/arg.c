@@ -128,6 +128,8 @@ void arg_lint(mkimg_args* args) {
                 case LBA:
                     if (args->create_sz_lba <= 0) 
                         arg_fail("F: Invalid size specified");
+                    else if (args->create_sz_lba % 512)
+                        arg_fail("F: Disk size is not a multiple of 1 sector (512 bytes)");
                     break;
             }
             if (!args->outfile)

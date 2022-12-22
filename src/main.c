@@ -30,7 +30,7 @@ void format(mkimg_args* args, image* img) {
 void mode_create(mkimg_args* args) {
     image* img = image_new();
     image_detect(img);
-    
+    img->image_template = args->create_template;
     if (args->create_sizemode == LBA) 
         image_new_buffer(img, args->create_sz_lba);
     else {

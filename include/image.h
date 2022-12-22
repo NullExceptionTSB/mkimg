@@ -8,6 +8,7 @@ typedef struct _MKIMG_DISK {
     char* image_buffer;
     mkimg_parttype image_partition_table;
     mkimg_filesystem image_file_system;
+    int image_template;
 }image;
 
 image* image_new();
