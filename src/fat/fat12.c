@@ -82,7 +82,8 @@ int fat12_get_chain_next(fat12_cluster* fat, int current_cluster) {
 }
 
 void fat12_freechain(image* img, bpb16* bpb, int start_cluster_idx) {
-    fat12_cluster* fat = img->image_buffer + bpb->reservedSectors;
+    fat12_cluster* fat = 
+        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors);
     int clust_next = start_cluster_idx;
     do {
         fat12_cluster twinc = fat[clust_next/2];
@@ -100,7 +101,8 @@ void fat12_freechain(image* img, bpb16* bpb, int start_cluster_idx) {
 }
 //returns: starting cluster #
 int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) { 
-    fat12_cluster* fat_start = img->image_buffer + bpb->reservedSectors;
+    fat12_cluster* fat_start = 
+        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors);
     int clusters_allocated = 0, prev_al_clus = 0, first_clus = 0;
     for (int i = 2; i < bpb->sectorsPerFat*512*2/3; i++) {
         int cluster = i%2
@@ -149,7 +151,8 @@ void fat12_write_file_via_cluster_chain(char* data, size_t data_size,
 
     size_t data_left = data_size;
     int spc = bpb->sectorsPerCluster;
-    fat12_cluster* fat = img->image_buffer + bpb->reservedSectors;
+    fat12_cluster* fat = 
+        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors);
     char* data_area = img->image_buffer + ((bpb->reservedSectors + 
         bpb->sectorsPerFat * bpb->numFats) * bpb->bytesPerSector + 
         32 * bpb->rootDirEntries);
@@ -188,6 +191,21 @@ char* fat12_new_short_filename(char* long_filename) {
     
 }
 
+void fat12_set_bootsect(char* bootsector, size_t bs_size, image* img) {
+    if (bs_size != 512) 
+        fail("F: Boot sector must be 1 sector long");
+    
+    switch (img->image_partition_table) {
+        case PARTTYPE_NONE:
+            memcpy(img->image_buffer+sizeof(bpb16), 
+                bootsector+sizeof(bpb16),
+                bs_size-sizeof(bpb16)-2);
+                break;
+        default:
+            fail("F: Unsupported partition type, cannot continue");
+    }
+}
+
 void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
     if (data_size > img->image_size) 
         fail("F: File larger than entire image !");
@@ -195,7 +213,7 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
     bpb16* bpb_16;
     switch (img->image_partition_table) {
         case PARTTYPE_NONE:
-            bpb_16 = img->image_buffer;
+            bpb_16 = (bpb16*)img->image_buffer;
             
             int clusters_needed = data_size / 
                 (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector);
@@ -212,9 +230,11 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
             fat12_write_file_via_cluster_chain(data, data_size, img,
                 bpb_16, startc);
 
-            rootdir_entry* rootdir = bpb_16->hiddenSectors + 
+            rootdir_entry* rootdir = 
+                (rootdir_entry*)(img->image_buffer +
+                bpb_16->hiddenSectors + 
                 bpb_16->numFats + bpb_16->sectorsPerFat * 
-                bpb_16->bytesPerSector;
+                bpb_16->bytesPerSector);
             int free_entry_found = 0;
             for (int i = 0; i < bpb_16->rootDirEntries; i++) {
                 if (rootdir[i].filename[0] == '\0') {
