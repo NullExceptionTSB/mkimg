@@ -22,4 +22,4 @@ This is a list for current templates supported by the `-t/--template` option:
 
 ## COMPILATION INSTRUCTIONS:
 TO COMPILE: `make`, executable will be outputted in project root directory\
-TO INSTALL: `sudo make install`, must be compiled **before** being installed!!!\
+TO INSTALL: `sudo make install`, must be compiled **before** being installed!!! 
