@@ -1,5 +1,6 @@
 # mkimg
-OSDev Image Builder Tool\
+Hard drive and floppy disk image builder tool, intended primarily for use in operating system development
+and to replace platform-specific and root dependent tools (mount) with a single program\
 ![GNU GPLv3 Logo with "Free as in Freedom"](https://www.gnu.org/graphics/gplv3-with-text-136x68.png)
 <br>
 - Written in C99
