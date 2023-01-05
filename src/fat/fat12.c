@@ -219,6 +219,22 @@ void fat12_set_bootsect(char* bootsector, size_t bs_size, image* img) {
     }
 }
 
+void fat12_mirror_fats(image* img, int masterfat) {
+    bpb16* bpb = (bpb16*)img->image_buffer;
+    void** fatptrs = malloc(sizeof(void*)*bpb->numFats);
+    for (int i = 0; i < bpb->numFats; i++) 
+        fatptrs[i] = img->image_buffer + 
+                     (bpb->reservedSectors + bpb->sectorsPerFat * i)
+                     *bpb->bytesPerSector;
+    
+    for (int i = 0; i < bpb->numFats; i++) 
+        if (i != masterfat) 
+            memcpy(fatptrs[i], 
+                fatptrs[masterfat], 
+                bpb->sectorsPerFat * bpb->bytesPerSector);
+    
+}
+
 void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
     if (data_size > img->image_size) 
         fail("F: File larger than entire image !");
@@ -227,11 +243,10 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
     switch (img->image_partition_table) {
         case PARTTYPE_NONE:
             bpb_16 = (bpb16*)img->image_buffer;
-            
-            int clusters_needed = data_size / 
-                (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector) +
-                (data_size % (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector))>0;
-            printf("clusters_needed: %u\n", clusters_needed);
+            int bpc = (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector);
+            int clusters_needed = 
+                (data_size / bpc) + ((data_size % bpc) > 0);
+
             if (clusters_needed > 4094) //2^24-2
                 fail("F: File too big for this filesystem");
             else if (clusters_needed > bpb_16->sectorsPerFat*512*2/3)
@@ -271,10 +286,13 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
             if (!free_entry_found)
                 fail("F: Too many files on drive");
             break;
+            
         default:
             fail("F: Unsupported partition type, cannot continue");
             return;
     }
+
+    fat12_mirror_fats(img, 0);
 }
 
 void fat12_format(image* img) {
