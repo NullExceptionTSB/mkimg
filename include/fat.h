@@ -37,7 +37,8 @@ typedef struct _FAT12_CLUSTER {
 typedef struct _FAT_ROOT_DIR_ENTRY {
     char        filename[8];
     char        extension[3];
-    uint8_t     attribute;    
+    uint8_t     attribute; 
+    uint8_t     attrib_ex;   
     uint8_t     creation_time_ms;
     uint16_t    creation_time;
     uint16_t    creation_date;

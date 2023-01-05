@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 
 #include <arg.h>
@@ -8,6 +7,11 @@
 #include <fat.h>
 #include <mbr.h>
 #include <image.h>
+#include <fsdriver.h>
+#include <fs/fat12.h>
+
+const mkimg_fsdriver fsdriver_fat12 = 
+    {"FAT12", FSFAT12, fat12_addfile, fat12_format, fat12_set_bootsect};
 
 int fat12_calc_sectors_per_fat(bpb16* bpb) {
     //generic values
@@ -100,16 +104,17 @@ void fat12_freechain(image* img, bpb16* bpb, int start_cluster_idx) {
     } while (clust_next < 0xFF8);
 }
 //returns: starting cluster #
+
+//BROKEN!!
 int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) { 
     fat12_cluster* fat_start = 
-        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors);
+        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors * bpb->bytesPerSector);
     int clusters_allocated = 0, prev_al_clus = 0, first_clus = 0;
     for (int i = 2; i < bpb->sectorsPerFat*512*2/3; i++) {
         int cluster = i%2
             ?fat_start[i/2].odd_clust1 | fat_start[i/2].odd_clust2 << 8
             :fat_start[i/2].even_clust1 << 4 | fat_start[i/2].even_clust2;
         
-
         if (!cluster) {
             if (prev_al_clus) {
                 if (prev_al_clus % 2) {
@@ -120,8 +125,9 @@ int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) {
                     fat_start[prev_al_clus/2].even_clust1 = (char)i;
                     fat_start[prev_al_clus/2].even_clust2 = (char)((i>>8)&0xF);
                 }
-            } else first_clus = cluster;
-            prev_al_clus = cluster;
+            } else prev_al_clus = i;
+            if (!first_clus) 
+                first_clus = i;
             clusters_allocated++;
 
             if (cluster_count == clusters_allocated) {
@@ -132,7 +138,7 @@ int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) {
                     fat_start[i/2].even_clust1 = 0xFF;
                     fat_start[i/2].even_clust2 = 0x8;
                 }
-                break;
+                return first_clus;
             }
         }
     }
@@ -148,26 +154,29 @@ int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) {
 
 void fat12_write_file_via_cluster_chain(char* data, size_t data_size, 
     image* img, bpb16* bpb, int start_cluster_idx) {
-
     size_t data_left = data_size;
     int spc = bpb->sectorsPerCluster;
     fat12_cluster* fat = 
-        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors);
+        (fat12_cluster*)(img->image_buffer + bpb->reservedSectors*bpb->bytesPerSector);
     char* data_area = img->image_buffer + ((bpb->reservedSectors + 
         bpb->sectorsPerFat * bpb->numFats) * bpb->bytesPerSector + 
         32 * bpb->rootDirEntries);
 
+
     int clustern = start_cluster_idx;
     do {
+        char* cluster_data = data_area + 
+            (clustern-2) * bpb->sectorsPerCluster * bpb->bytesPerSector;
         //go foolish yes
         size_t copy_size = 
             data_left > bpb->sectorsPerCluster*bpb->bytesPerSector?
-            bpb->sectorsPerCluster*bpb->bytesPerSector : data_left;        
-        memcpy(data_area + 
-            (clustern-2) * bpb->sectorsPerCluster * bpb->bytesPerSector,
+            bpb->sectorsPerCluster*bpb->bytesPerSector : data_left; 
+
+        memcpy(cluster_data,
             data + (data_size - data_left),
             copy_size);
         data_left -= copy_size;
+        
     } while (data_left);
 }
 
@@ -179,14 +188,18 @@ char* fat12_new_short_filename(char* long_filename) {
     size_t fn_len, ex_len;
     for (fn_len = 0; fn_len < strlen(long_filename); fn_len++) 
         if (long_filename[fn_len]=='.') break;
-    ex_len = strlen(long_filename) - fn_len;
-
+    ex_len = strlen(long_filename) - fn_len - 1;
+    
     //take max first 8 chars of filename and 3 chars of extension
-    for (int i = 0; i < 8>fn_len?fn_len:8; i++) 
-        sfn[i] = toupper(long_filename[i]);
-    for (int i = 0; i < 3>ex_len?ex_len:3; i++)
-        sfn[8+i] = toupper(long_filename[fn_len+1+i]);
 
+    fn_len = (8>=fn_len?fn_len:8);
+    ex_len = (3>=ex_len?ex_len:3);
+
+    for (int i = 0; i < fn_len; i++) 
+        sfn[i] = toupper(long_filename[i]);
+    
+    for (int i = 0; i < ex_len; i++)
+        sfn[8+i] = toupper(long_filename[fn_len+1+i]);
     return sfn;
     
 }
@@ -216,7 +229,8 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
             bpb_16 = (bpb16*)img->image_buffer;
             
             int clusters_needed = data_size / 
-                (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector);
+                (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector) +
+                (data_size % (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector))>0;
             
             if (clusters_needed > 4094) //2^24-2
                 fail("F: File too big for this filesystem");
@@ -226,15 +240,14 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
             int startc = fat12_allocclusters(img, bpb_16, clusters_needed);
             if (startc == -1)
                 fail("F: Not enough space for file");
-
+            
             fat12_write_file_via_cluster_chain(data, data_size, img,
                 bpb_16, startc);
-
             rootdir_entry* rootdir = 
-                (rootdir_entry*)(img->image_buffer +
-                bpb_16->hiddenSectors + 
-                bpb_16->numFats + bpb_16->sectorsPerFat * 
-                bpb_16->bytesPerSector);
+                (rootdir_entry*)(img->image_buffer + (
+                bpb_16->reservedSectors + 
+                bpb_16->numFats * bpb_16->sectorsPerFat) 
+                *bpb_16->bytesPerSector);
             int free_entry_found = 0;
             for (int i = 0; i < bpb_16->rootDirEntries; i++) {
                 if (rootdir[i].filename[0] == '\0') {
@@ -244,10 +257,17 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
                                                 //rootdir+(sizeof(entry)*i)
                     free(sfn);
                     rootdir[i].start_cluster = startc;
+                    rootdir[i].file_size = data_size;
+
+                    rootdir[i].last_modification_time = 
+                        rootdir[i].creation_time;
+                    rootdir[i].last_modification_date = 
+                        rootdir[i].creation_date;
+
                     break;
                 }
             }
-
+            
             if (!free_entry_found)
                 fail("F: Too many files on drive");
             break;
@@ -274,7 +294,7 @@ void fat12_format(image* img) {
                 bpb_16->rootDirEntries);
             break;
         default:
-            puts("F: Unsupported partition type, cannot format");
+            fail("F: Unsupported partition type, cannot format");
             return;
     }
 }

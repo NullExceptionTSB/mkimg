@@ -17,8 +17,10 @@ static struct argp_option options[] = {
 
     {"size", 's', "size", 0, "LBA in sectors, incompatible with -C, -H, -S, -t", 2},
 
-    {"out", 'o', "outfile", 0, "Output image file, mandatory in create mode", 3},
+    {"out", 'o', "outfile", 0, "Output image file. In add mode, specifies image file.", 3},
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
+    
+    {"unpartitioned", 'u', 0, 0, "Force mkimg to treat disk image as unpartitioned. Useful for floppy images"},
 
     {0}
 };
@@ -41,6 +43,7 @@ int arg_process_template(mkimg_args* pargs, int template) {
             pargs->create_sz_lba = 2880*512;
             pargs->create_sizemode = CHS;
             pargs->create_desiredfs = FSFAT12;
+            pargs->force_unpartitioned = 1;
             return 1;
         default: return 0;
     }
@@ -57,13 +60,16 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             argp_state_help(state, stdout, 0);
             break;
         case 'c':
-            if (!pargs->mode != MODE_UNDECIDED && !pargs->mode != create) 
+            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != create)) 
                 puts("W: Mode set twice (assuming first set is desired)");
             
             pargs->mode = create;
             break;
         case 'a':
-            puts("F: Not supported");
+            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != cpfile)) 
+                puts("W: Mode set twice (assuming first set is desired)");
+
+            pargs->mode = cpfile;
             break;
         case 't':
             pargs->create_template = 1;
@@ -102,6 +108,9 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             pargs->infile = malloc(strlen(arg)+1);
             strcpy(pargs->infile, arg);
             break;
+        case 'u':
+            pargs->force_unpartitioned = 1;
+            break;
         case ARGP_KEY_END:
             if (pargs->mode == MODE_UNDECIDED)
                 argp_usage(state);
@@ -138,6 +147,12 @@ void arg_lint(mkimg_args* args) {
             }
             if (!args->outfile)
                 arg_fail("F: No output file specified for create mode");
+            break;
+        case cpfile:
+            if(!args->outfile)
+                arg_fail("F: No image file specified for add mode");
+            if (!args->infile)
+                arg_fail("F: No input file specified for add mode");
             break;
         default:
             arg_fail("F: Specified mode not supported or invalid");            

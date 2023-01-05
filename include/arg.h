@@ -15,8 +15,12 @@ typedef enum _MKIMG_DESIRED_PARTITION_TYPE {
 
 typedef struct _MKIMG_ARGUMENT_STRUCT {
     mkimg_mode mode;
-    char verbose : 1;
-    char reserved : 7;
+
+    unsigned char verbose : 1;
+    unsigned char force_unpartitioned : 1;
+    unsigned char force_nofs : 1;
+    unsigned char reserved : 5;
+
     char* outfile;
     char* infile;
 

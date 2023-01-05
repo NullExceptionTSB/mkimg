@@ -15,4 +15,6 @@ image* image_new();
 void image_new_buffer(image* img, size_t buffersz);
 void image_new_buffer_chs(image* img, chs chs_sz);
 void image_detect(image* img);
+void image_detect_ex(image* img, int force_unpart, int force_nofs);
+void image_load(image* img, char* path);
 void image_free(image* img);

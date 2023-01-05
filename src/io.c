@@ -4,6 +4,7 @@
 #include <ctype.h>
 
 char* io_read_file(char* path, size_t read_ammount, size_t* actually_read) {
+    if (!read_ammount) return NULL;
     FILE* file = fopen(path, "rb");
     if (!file) return NULL;
 
