@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <filesystem.h>
 #include <fsdriver.h>
@@ -75,8 +76,10 @@ void mode_add(mkimg_args* args) {
     if (!file_data)
         fail("F: Failed to open input file");
         
-    fsdriver->add_file(args->infile, file_data, file_sz, img);
-    
+    char* filename = strrchr(args->infile, '/');
+    filename = filename?filename+1:args->infile;
+    fsdriver->add_file(filename, file_data, file_sz, img);
+
     io_write_file(args->outfile, img->image_buffer, img->image_size);
 
     image_free(img);

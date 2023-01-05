@@ -231,7 +231,7 @@ void fat12_addfile(char* filename, char* data, size_t data_size, image* img) {
             int clusters_needed = data_size / 
                 (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector) +
                 (data_size % (bpb_16->sectorsPerCluster * bpb_16->bytesPerSector))>0;
-            
+            printf("clusters_needed: %u\n", clusters_needed);
             if (clusters_needed > 4094) //2^24-2
                 fail("F: File too big for this filesystem");
             else if (clusters_needed > bpb_16->sectorsPerFat*512*2/3)
