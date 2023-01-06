@@ -1,8 +1,13 @@
 ORG 0x7C00
 BITS 16
-
+dw 0
 xor ax, ax
+mov es, ax
 mov si, msg
+mov al, BYTE [es:0x7C01]
+add si, 2
+add si, ax
+xor ax, ax
 ploop:
 	lodsb
 	or al, al
