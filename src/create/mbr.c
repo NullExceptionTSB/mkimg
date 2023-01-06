@@ -7,6 +7,7 @@
 #include <fail.h>
 #include <chs.h>
 #include <const.h>
+#include <defaults.h>
 
 int mbr_init(char* buffer, size_t buffer_sz) {
     if (buffer_sz < SECTOR_SIZE)
@@ -16,12 +17,7 @@ int mbr_init(char* buffer, size_t buffer_sz) {
 
     mbrstruct* image_mbr = (mbrstruct*)buffer;
     char* bootsect_stub = 
-        io_read_file("mbr/mbrstub.bin", SECTOR_SIZE, NULL);
-    //try the other path one
-    if (!bootsect_stub)
-        bootsect_stub =
-            io_read_file("/usr/share/mkimg/mbr/mbrstub.bin", 
-                SECTOR_SIZE, NULL);
+        defaults_get_bootsect_stub();
 
     if (!bootsect_stub)
         return 0;

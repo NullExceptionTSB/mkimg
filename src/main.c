@@ -7,8 +7,10 @@
 #include <io.h>
 #include <arg.h>
 #include <image.h>
+#include <defaults.h>
 
 #include <create/mbr.h>
+#include <fat.h>
 
 void fail(char* msg) {
     puts(msg);
@@ -40,11 +42,16 @@ void mode_create(mkimg_args* args) {
         puts("W: Filesystem driver does not support bootloader writing");
 
     fsdriver->format(img);
-    if (args->infile && fsdriver->set_boot_sector) {
+    if (fsdriver->set_boot_sector) {
         size_t sz = io_get_file_size(args->infile);
         char* bs = io_read_file(args->infile, sz, &sz);
-        fsdriver->set_boot_sector(bs,sz,img);
-        free(bs);
+        if (!bs)
+            bs = defaults_get_bootsect_stub();
+        if (bs) {
+            sz = sz?sz:512;
+            fsdriver->set_boot_sector(bs,sz,img,args->bsnoseek);
+            free(bs);
+        }
     }
 
     io_write_file(args->outfile, img->image_buffer, img->image_size);
@@ -87,6 +94,7 @@ void mode_add(mkimg_args* args) {
 }
 
 int main(int argc, char* argv[]) {
+    printf("%u\n",sizeof(bpb16));
     mkimg_args* args = arg_parse(argc, argv);
     switch (args->mode) {
         case create:

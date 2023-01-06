@@ -19,7 +19,8 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     unsigned char verbose : 1;
     unsigned char force_unpartitioned : 1;
     unsigned char force_nofs : 1;
-    unsigned char reserved : 5;
+    unsigned char bsnoseek : 1;
+    unsigned char reserved : 4;
 
     char* outfile;
     char* infile;

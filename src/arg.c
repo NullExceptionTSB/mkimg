@@ -21,6 +21,7 @@ static struct argp_option options[] = {
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
     
     {"unpartitioned", 'u', 0, 0, "Force mkimg to treat disk image as unpartitioned. Useful for floppy images"},
+    {"nobsseek", 'N', 0, 0, "Don't seek over BPB in bootsector files"},
 
     {0}
 };
@@ -110,6 +111,9 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             break;
         case 'u':
             pargs->force_unpartitioned = 1;
+            break;
+        case 'N':
+            pargs->bsnoseek = 1;
             break;
         case ARGP_KEY_END:
             if (pargs->mode == MODE_UNDECIDED)

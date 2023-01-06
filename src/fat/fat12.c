@@ -34,6 +34,10 @@ void fat12_relabel(bpb16* bpb, char* newlabel) {
 
 bpb16* fat12_write_bpb_direct(image* img) {
     bpb16* bpb = calloc(1, sizeof(bpb16));
+    bpb->jumpcode[0] = 0xEB;
+    bpb->jumpcode[1] = sizeof(bpb16)-2;
+    bpb->jumpcode[2] = 0x90;
+
     bpb->bytesPerSector = 512;
     memset(bpb->oem, ' ', 8);
     bpb->sectorsPerCluster = 1; //forced for fat12
@@ -105,12 +109,11 @@ void fat12_freechain(image* img, bpb16* bpb, int start_cluster_idx) {
 }
 //returns: starting cluster #
 
-//BROKEN!!
 int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) { 
     fat12_cluster* fat_start = 
         (fat12_cluster*)(img->image_buffer + bpb->reservedSectors * bpb->bytesPerSector);
     int clusters_allocated = 0, prev_al_clus = 0, first_clus = 0;
-    for (int i = 2; i < bpb->sectorsPerFat*512*2/3; i++) {
+    for (int i = 3; i < bpb->sectorsPerFat*512*2/3; i++) {
         int cluster = i%2
             ?fat_start[i/2].odd_clust1 | fat_start[i/2].odd_clust2 << 8
             :fat_start[i/2].even_clust1 << 4 | fat_start[i/2].even_clust2;
@@ -125,7 +128,8 @@ int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) {
                     fat_start[prev_al_clus/2].even_clust1 = (char)i;
                     fat_start[prev_al_clus/2].even_clust2 = (char)((i>>8)&0xF);
                 }
-            } else prev_al_clus = i;
+            } 
+            prev_al_clus = i;
             if (!first_clus) 
                 first_clus = i;
             clusters_allocated++;
@@ -166,7 +170,8 @@ void fat12_write_file_via_cluster_chain(char* data, size_t data_size,
     int clustern = start_cluster_idx;
     do {
         char* cluster_data = data_area + 
-            (clustern-2) * bpb->sectorsPerCluster * bpb->bytesPerSector;
+            ((clustern-2) * bpb->sectorsPerCluster * bpb->bytesPerSector);
+        
         //go foolish yes
         size_t copy_size = 
             data_left > bpb->sectorsPerCluster*bpb->bytesPerSector?
@@ -176,7 +181,15 @@ void fat12_write_file_via_cluster_chain(char* data, size_t data_size,
             data + (data_size - data_left),
             copy_size);
         data_left -= copy_size;
-        
+        int nclus = 0;
+        if (clustern%2) {
+            nclus |= (fat[clustern/2].odd_clust1 & 0xF);
+            nclus |= fat[clustern/2].odd_clust2 << 8;
+        } else {
+            nclus |= fat[clustern/2].even_clust1;
+            nclus |= fat[clustern/2].even_clust2 << 8 ;
+        }
+        clustern = nclus;
     } while (data_left);
 }
 
@@ -204,14 +217,14 @@ char* fat12_new_short_filename(char* long_filename) {
     
 }
 
-void fat12_set_bootsect(char* bootsector, size_t bs_size, image* img) {
+void fat12_set_bootsect(char* bootsector, size_t bs_size, image* img, int noseek) {
     if (bs_size != 512) 
         fail("F: Boot sector must be 1 sector long");
     
     switch (img->image_partition_table) {
         case PARTTYPE_NONE:
             memcpy(img->image_buffer+sizeof(bpb16), 
-                bootsector+sizeof(bpb16),
+                bootsector+(sizeof(bpb16)*noseek!=0),
                 bs_size-sizeof(bpb16)-2);
                 break;
         default:

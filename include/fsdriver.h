@@ -8,7 +8,7 @@ typedef void(*fs_add_file_proc)(char* filename, char* data,
     size_t data_size, image* img);
 typedef void(*fs_format_proc)(image* img);
 typedef void(*fs_set_boot_sector_proc)(char* bootsector_data, size_t bssize,
-    image* img);
+    image* img, int noseek);
 
 typedef struct _MKIMG_FS_DRIVER {
     char* fsname;
