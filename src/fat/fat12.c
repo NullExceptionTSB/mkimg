@@ -40,6 +40,7 @@ bpb16* fat12_write_bpb_direct(image* img) {
 
     bpb->bytesPerSector = 512;
     memset(bpb->oem, ' ', 8);
+    memcpy(bpb->oem, "mkimg", 5);
     bpb->sectorsPerCluster = 1; //forced for fat12
     bpb->reservedSectors = 1;
     bpb->numFats = 2;

@@ -95,6 +95,7 @@ void mode_add(mkimg_args* args) {
 
 int main(int argc, char* argv[]) {
     mkimg_args* args = arg_parse(argc, argv);
+
     switch (args->mode) {
         case create:
             mode_create(args);

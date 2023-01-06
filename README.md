@@ -22,7 +22,6 @@ This is a list for current templates supported by the `-t/--template` option:
 ### Usage example
 To create a 1.44MiB 3.5' Floppy Disk image named `FloppyImageFile.img`:\
 `mkimg -c -t 1 -o FloppyImageFile.img`\
-**NOTE: THIS COMMAND WILL NOT CURRENTLY WORK AS FS DETECTION IS NOT CURRENTLY IMPLEMENTED**\
 To add file `main.c` to image `FloppyImageFile.img` which is unpartitioned:\
 `mkimg -a -i main.c -o FloppyImageFile.img -u`\
 To add file `main.c` to image `FloppyImageFile.img` which is a 1.44MiB 3.5' Floppy Disk:\

@@ -46,6 +46,29 @@ void image_detect_partition_table(image* img) {
 
 }
 
+//todo: change image to partition
+mkimg_filesystem image_autodetect_fat(image* img) {
+    uint16_t rsectors = *((uint16_t*)(img->image_buffer+11+3)),
+             bps = *((uint16_t*)(img->image_buffer+11));
+    char* fatptr = img->image_buffer + rsectors*bps;
+    if (fatptr > (img->image_buffer + img->image_size)) 
+        return 0;
+    uint32_t* rclusters = (uint32_t*)fatptr;
+
+    int may_16 = 1, may_32 = 1;
+    //detecting FAT type using file allocation table reserved clusters
+    if (rclusters[0] == 0xFFFFF8)
+        return FSFAT12;
+    if (rclusters[0] == 0xFFFFFFF8)
+        return FSFAT16;
+    if (rclusters[0] == 0x0FFFFFF8 && 
+        rclusters[1] == 0x0FFFFFFF && 
+        rclusters[2] == 0x0FFFFFF8)
+        return FSFAT32;
+
+    return 0;
+}
+
 void image_detect_filesystem_nopart(image* img) {
     char magic_number_buff[8];
     //detect NTFS
@@ -60,9 +83,11 @@ void image_detect_filesystem_nopart(image* img) {
         img->image_file_system = FSExFAT;
         return;
     }
-    return;
     
-    //WARNING! THIS DETECTION IS TECHNICALLY INCORRECT!
+    //detect other FATs
+    mkimg_filesystem fatfs = image_autodetect_fat(img);
+    if (fatfs)
+        img->image_file_system = fatfs;
 
 }
 
@@ -95,6 +120,7 @@ void image_detect_ex(image* img, int force_unpart, int force_nofs) {
         img->image_partition_table = PARTTYPE_NONE;
     else 
         image_detect_partition_table(img);
+
     if (force_nofs) 
         img->image_partition_table = FSNone;
     else 
