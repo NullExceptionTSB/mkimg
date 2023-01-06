@@ -121,12 +121,12 @@ int fat12_allocclusters(image* img, bpb16* bpb, int cluster_count) {
         if (!cluster) {
             if (prev_al_clus) {
                 if (prev_al_clus % 2) {
-                    fat_start[prev_al_clus/2].odd_clust1 = (char)(i&0xF);
-                    fat_start[prev_al_clus/2].odd_clust2 = (char)(i>>8);
+                    fat_start[prev_al_clus/2].odd_clust1 = (char)(i&0x00F);
+                    fat_start[prev_al_clus/2].odd_clust2 = (char)(i>>4);
                 }
                 else {
                     fat_start[prev_al_clus/2].even_clust1 = (char)i;
-                    fat_start[prev_al_clus/2].even_clust2 = (char)((i>>8)&0xF);
+                    fat_start[prev_al_clus/2].even_clust2 = (char)((i>>8)&0x0F);
                 }
             } 
             prev_al_clus = i;
@@ -184,7 +184,7 @@ void fat12_write_file_via_cluster_chain(char* data, size_t data_size,
         int nclus = 0;
         if (clustern%2) {
             nclus |= (fat[clustern/2].odd_clust1 & 0xF);
-            nclus |= fat[clustern/2].odd_clust2 << 8;
+            nclus |= fat[clustern/2].odd_clust2 << 4;
         } else {
             nclus |= fat[clustern/2].even_clust1;
             nclus |= fat[clustern/2].even_clust2 << 8 ;
