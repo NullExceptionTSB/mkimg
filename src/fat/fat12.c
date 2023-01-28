@@ -64,10 +64,6 @@ void fat12_puttables(char* ptr, int table_size_sectors, int num_tables) {
         (ptr+(table_size_sectors*512*i))[2] = 0xFF;   
     }
 }
-void fat12_putdir(char* ptr, int entries) {
-    memset(ptr, 0, entries*32);
-}
-//external functions
 
 void fat12_set_bootsect(char* bootsector_data, size_t bssize,
     partition* part, int seek_sector) {
@@ -78,24 +74,13 @@ void fat12_set_bootsect(char* bootsector_data, size_t bssize,
     else 
         memcpy(part->partition_buffer + seekc, bootsector_data, bssize-seekc);
 }
-/*
-void fat12_set_bootesect(char* bootsector_data, size_t bssize,
-    image* img, int seek_sector) {
-    size_t seekc = sizeof(bpb16);
-    if (seek_sector) 
-        memcpy(img->image_buffer + seekc, bootsector_data + seekc, 
-            bssize-seekc);
-    else 
-        memcpy(img->image_buffer + seekc, bootsector_data, bssize-seekc);
-}
-*/
 
 void fat12_format(partition* part, mkimg_args* args) {
     bpb16* bpb = fat12_write_bpb(part, args->create_fat_small_root);
     fat12_puttables(part->partition_buffer + 
         bpb->reservedSectors*bpb->bytesPerSector,
         bpb->sectorsPerFat, bpb->numFats);
-    fat12_putdir(part->partition_buffer + 
+    fat_putdir(part->partition_buffer + 
         bpb->reservedSectors*bpb->bytesPerSector+
         bpb->sectorsPerFat*bpb->numFats*bpb->bytesPerSector,
         bpb->rootDirEntries);

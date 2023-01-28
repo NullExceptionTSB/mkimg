@@ -35,3 +35,7 @@ char* fat_new_short_filename(char* long_filename) {
         sfn[8+i] = toupper(long_filename[fn_len+1+i]);
     return sfn;
 }
+
+void fat_putdir(char* ptr, int entries) {
+    memset(ptr, 0, entries*32);
+}

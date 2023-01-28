@@ -53,3 +53,4 @@ typedef struct _FAT_ROOT_DIR_ENTRY {
 
 void fat_relabel(bpb16* bpb, char* newlabel);
 char* fat_new_short_filename(char* long_filename);
+void fat_putdir(char* ptr, int entries);
