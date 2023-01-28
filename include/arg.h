@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem.h>
+#include <partition.h>
 
 typedef enum _MKIMG_ARGUMENT_MODE {
     MODE_UNDECIDED, create, cpfile, rmfile
@@ -8,10 +9,6 @@ typedef enum _MKIMG_ARGUMENT_MODE {
 typedef enum _MKIMG_SIZE_MODE {
     SIZEMODE_UNDECIDED, CHS, LBA
 } mkimg_sizemode;
-
-typedef enum _MKIMG_DESIRED_PARTITION_TYPE {
-    PARTTYPE_UNDECIDED, PARTTYPE_NONE, PARTTYPE_MBR, PARTTYPE_GPT
-} mkimg_parttype;
 
 typedef struct _MKIMG_ARGUMENT_STRUCT {
     mkimg_mode mode;
@@ -26,6 +23,7 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     char* infile;
 
     int create_template;
+    int create_fat_small_root;
     int create_sz_cylinders;
     int create_sz_heads;
     int create_sz_spt;

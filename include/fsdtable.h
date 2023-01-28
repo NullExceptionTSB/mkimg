@@ -1,7 +1,7 @@
 #pragma once
 #include <image.h>
 #include <filesystem.h>
-#include <fsdriver.h>
+#include <driver/fsdriver.h>
 #include <fs/fat12.h>
 
 const mkimg_fsdriver* known_fsdriver_table[] = { 

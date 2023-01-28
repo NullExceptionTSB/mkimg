@@ -1,5 +1,5 @@
 #include <filesystem.h>
-#include <fsdriver.h>
+#include <driver/fsdriver.h>
 #include <fsdtable.h>
 
 //pointers returned by this function always point to read-only structures!

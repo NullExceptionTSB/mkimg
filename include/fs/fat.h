@@ -50,3 +50,6 @@ typedef struct _FAT_ROOT_DIR_ENTRY {
     uint32_t    file_size;
 }rootdir_entry;
 #pragma pack(pop)
+
+void fat_relabel(bpb16* bpb, char* newlabel);
+char* fat_new_short_filename(char* long_filename);

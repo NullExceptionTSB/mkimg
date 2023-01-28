@@ -1,14 +1,16 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <arg.h>
 #include <image.h>
+#include <partition.h>
 #include <filesystem.h>
 
 typedef void(*fs_add_file_proc)(char* filename, char* data,
     size_t data_size, image* img);
-typedef void(*fs_format_proc)(image* img);
+typedef void(*fs_format_proc)(partition* img, mkimg_args* args);
 typedef void(*fs_set_boot_sector_proc)(char* bootsector_data, size_t bssize,
-    image* img, int noseek);
+    partition* part, int seek_sector);
 
 typedef struct _MKIMG_FS_DRIVER {
     char* fsname;

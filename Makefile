@@ -4,17 +4,37 @@ CCARGS = -s -std=c99 -Iinclude
 LNARGS = -s -O3
 EXECNAME = mkimg
 
-all: build mbr
-	$(CC) $(CCARGS) src/main.c -o build/main.o
-	$(CC) $(CCARGS) src/io.c -o build/io.o
-	$(CC) $(CCARGS) src/image.c -o build/image.o
-	$(CC) $(CCARGS) src/chs.c -o build/chs.o
+all: build mbr $(EXECNAME)
+	
+$(EXECNAME): build/arg.o build/chs.o build/defaults.o build/filesystem.o build/image.o build/io.o build/main.o build/partition.o build/part_mbr.o build/part_unpart.o build/fat12.o build/fat_common.o
+	$(LD) build/*.o -lm -o $(EXECNAME)
+
+build/arg.o: src/arg.c
 	$(CC) $(CCARGS) src/arg.c -o build/arg.o
-	$(CC) $(CCARGS) src/filesystem.c -o build/filesystem.o
+build/chs.o: src/chs.c
+	$(CC) $(CCARGS) src/chs.c -o build/chs.o
+build/defaults.o: src/defaults.c
 	$(CC) $(CCARGS) src/defaults.c -o build/defaults.o
-	$(CC) $(CCARGS) src/create/mbr.c -o build/create_mbr.o
-	$(CC) $(CCARGS) src/fat/fat12.c -o build/fat_fat12.o
-	$(LD) -lm build/*.o -o $(EXECNAME)
+build/filesystem.o: src/filesystem.c
+	$(CC) $(CCARGS) src/filesystem.c -o build/filesystem.o
+build/image.o: src/image.c
+	$(CC) $(CCARGS) src/image.c -o build/image.o
+build/io.o: src/io.c
+	$(CC) $(CCARGS) src/io.c -o build/io.o
+build/main.o: src/main.c
+	$(CC) $(CCARGS) src/main.c -o build/main.o
+build/partition.o: src/partition.c
+	$(CC) $(CCARGS) src/partition.c -o build/partition.o	
+
+build/part_mbr.o: src/partition_table/mbr.c
+	$(CC) $(CCARGS) src/partition_table/mbr.c -o build/part_mbr.o
+build/part_unpart.o: src/partition_table/unpart.c
+	$(CC) $(CCARGS) src/partition_table/unpart.c -o build/part_unpart.o
+
+build/fat_common.o: src/fat/common.c 
+	$(CC) $(CCARGS) src/fat/common.c -o build/fat_common.o
+build/fat12.o: src/fat/fat12.c 
+	$(CC) $(CCARGS) src/fat/fat12.c -o build/fat12.o
 
 mbr:
 	-@mkdir mbr

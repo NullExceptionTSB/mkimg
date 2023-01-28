@@ -3,14 +3,13 @@
 #include <string.h>
 
 #include <filesystem.h>
-#include <fsdriver.h>
+#include <driver/fsdriver.h>
+#include <driver/ptdriver.h>
+
 #include <io.h>
 #include <arg.h>
 #include <image.h>
 #include <defaults.h>
-
-#include <create/mbr.h>
-#include <fat.h>
 
 void fail(char* msg) {
     puts(msg);
@@ -19,8 +18,6 @@ void fail(char* msg) {
 
 void mode_create(mkimg_args* args) {
     image* img = image_new();
-    image_detect(img);
-    img->image_template = args->create_template;
     if (args->create_sizemode == LBA) 
         image_new_buffer(img, args->create_sz_lba);
     else {
@@ -30,67 +27,26 @@ void mode_create(mkimg_args* args) {
         chssz.spt = args->create_sz_spt;
         image_new_buffer_chs(img, chssz);
     }
-    mbr_init(img->image_buffer, img->image_size);
+    image_detect_ex(img, args->force_unpartitioned);
+    
+    img->image_partition_table = args->force_unpartitioned ?
+        PARTTYPE_NONE :
+        args->create_desiredparttype;
+    img->image_template = args->create_template;
 
-    mkimg_fsdriver* fsdriver = 
-        filesystem_enum_to_driver(args->create_desiredfs);
+    mkimg_ptdriver* ptdriver = partition_enum_to_driver(img->image_partition_table);
+    if (!ptdriver) 
+        fail("F: unsupported partition table");
+    ptdriver->init(img);
+    if (ptdriver->add) ptdriver->add(img, 0, -1);
+
+    mkimg_fsdriver* fsdriver = filesystem_enum_to_driver(args->create_desiredfs);
     if (!fsdriver)
-        fail("F: Filesystem unknown or unsupported");
-    if (!fsdriver->format)
-        fail("F: Filesystem driver does not support formatting");
-    if (!fsdriver->set_boot_sector)
-        puts("W: Filesystem driver does not support bootloader writing");
+        fail("F: unsupported file system");
 
-    fsdriver->format(img);
-    if (fsdriver->set_boot_sector) {
-        size_t sz = io_get_file_size(args->infile);
-        char* bs = io_read_file(args->infile, sz, &sz);
-        if (!bs)
-            bs = defaults_get_bootsect_stub();
-        if (bs) {
-            sz = sz?sz:512;
-            fsdriver->set_boot_sector(bs,sz,img,args->bsnoseek);
-            free(bs);
-        }
-    }
+    fsdriver->format(img->partitions, args);
 
     io_write_file(args->outfile, img->image_buffer, img->image_size);
-
-    image_free(img);
-}
-
-void mode_add(mkimg_args* args) {
-    image* img = image_new();
-    image_load(img, args->outfile);
-    
-    if (!img->image_buffer) 
-        fail("F: Failed to open image file");
-
-    image_detect_ex(img, args->force_unpartitioned>0, args->force_nofs>0);
-    if (args->create_desiredfs)
-        img->image_file_system = args->create_desiredfs;
-
-    mkimg_fsdriver* fsdriver = 
-        filesystem_enum_to_driver(img->image_file_system);
-    if (!fsdriver)
-        fail("F: Filesystem unknown or unsupported");
-    
-    if (!fsdriver->add_file)
-        fail("F: Filesystem driver does not support writing");
-
-    size_t file_sz = io_get_file_size(args->infile);
-    char* file_data = io_read_file(args->infile, file_sz, &file_sz);
-    if (!file_data)
-        fail("F: Failed to open input file");
-        
-    char* filename = strrchr(args->infile, '/');
-    filename = filename?filename+1:args->infile;
-    fsdriver->add_file(filename, file_data, file_sz, img);
-
-    io_write_file(args->outfile, img->image_buffer, img->image_size);
-
-    image_free(img);
-    free(file_data);
 }
 
 int main(int argc, char* argv[]) {
@@ -101,7 +57,7 @@ int main(int argc, char* argv[]) {
             mode_create(args);
             break;
         case cpfile:
-            mode_add(args);
+            //mode_add(args);
             break;
         default: fail("F: Mode not supported");
     }
