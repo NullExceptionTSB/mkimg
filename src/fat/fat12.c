@@ -7,7 +7,6 @@
 #include <fs/fat12.h>
 #include <driver/fsdriver.h>
 
-
 int fat12_calc_sectors_per_fat(bpb16* bpb) {
     //common value table for optimization purpouses
     switch (bpb->totalSectors) {
@@ -36,8 +35,9 @@ bpb16* fat12_write_bpb(partition* part, int small_root) {
     bpb->totalSectors = part->partition_size/bpb->bytesPerSector;
     bpb->mediaDescriptor = 0xF8; //todo: decide media descriptor based on pars
     //todo: deprecate CHS completely
-    bpb->sectorsPerTrack = part->partition_size_chs.spt;
-    bpb->heads = part->partition_size_chs.head;
+    bpb->sectorsPerTrack = 1; //stub values so wacky bootloaders don't
+    bpb->heads = 1;           //explode due to div0 (normally this is 0
+                              //when unused)
     bpb->hiddenSectors = 0;
     bpb->largeSectors = 0;
 
