@@ -43,6 +43,9 @@ void fat_putdir(char* ptr, int entries) {
     memset(ptr, 0, entries*32);
 }
 
+//formula taken from GNU mtools (specifically mformat)
+//available from:
+//https://www.gnu.org/software/mtools/manual/fat_size_calculation.pdf
 int fat_calc_spf(int clus_size_bits, int clus_size_sect, 
     int res_sect, int rootdir_entries, int nfats, int total_sect) {
     

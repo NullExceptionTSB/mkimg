@@ -17,6 +17,7 @@ int fat12_calc_sectors_per_fat(bpb16* bpb) {
     return fat_calc_spf(12, bpb->sectorsPerCluster, 
         bpb->reservedSectors, bpb->rootDirEntries, bpb->numFats, bpb->totalSectors); //stub
 }
+
 bpb16* fat12_write_bpb(partition* part, int small_root) {
     bpb16* bpb = malloc(sizeof(bpb16));
     memset(bpb, 0, sizeof(bpb16));
@@ -55,6 +56,7 @@ bpb16* fat12_write_bpb(partition* part, int small_root) {
     memcpy(part->partition_buffer, bpb, sizeof(bpb16));
     return bpb;
 }
+
 void fat12_set_bootsect(char* bootsector_data, size_t bssize,
     partition* part, int seek_sector) {
     size_t seekc = sizeof(bpb16);
@@ -64,18 +66,17 @@ void fat12_set_bootsect(char* bootsector_data, size_t bssize,
     else 
         memcpy(part->partition_buffer + seekc, bootsector_data, bssize-seekc);
 }
+
 int fat12_get_next_cluster(fat12_cluster* fat, int cluster) {
     //fassert(cluster < fatsize*3/2, "F: Cluster out of range");
     fat12_cluster clust_twin = fat[cluster/2];
 
-    printf("o1=%02x,o2=%02x,e1=%02x,e2=%02x\n", clust_twin.odd_clust1 & 0xF, clust_twin.odd_clust2, clust_twin.even_clust1, clust_twin.even_clust2);
-    printf("odd = %u, even = %u\n", (clust_twin.odd_clust1 & 0xF) | (clust_twin.odd_clust2 << 4),
-        (clust_twin.even_clust1) | (clust_twin.even_clust2 << 8));
     if (cluster%2) 
         return (clust_twin.odd_clust1 & 0xF | (clust_twin.odd_clust2 << 4));
     else 
         return ((clust_twin.even_clust1) | clust_twin.even_clust2 << 8);
 }
+
 void fat12_set_next_cluster(fat12_cluster* fat, int cluster, int next) {
     fat12_cluster clust_twin = fat[cluster/2];
     
@@ -87,6 +88,7 @@ void fat12_set_next_cluster(fat12_cluster* fat, int cluster, int next) {
         fat[cluster/2].even_clust2 = (next >> 8) & 0x00F;
     }
 }
+
 int fat12_allocate_clusters(fat12_cluster* fat, int num_clusters, 
     int total_clusters) {
 
@@ -114,13 +116,13 @@ int fat12_allocate_clusters(fat12_cluster* fat, int num_clusters,
     fat12_set_next_cluster(fat, eof, 0xFFF);
     return starting;
 }
+
 void fat12_write_cluster_chain(int start_cluster, char* data_area,
     char* data, fat12_cluster* fat, size_t data_size, int bytes_per_cluster){
     size_t remaining = data_size;
     int cluster = start_cluster;
     while (remaining) {
         if (remaining < bytes_per_cluster) {
-            puts("pootis");
             memcpy(
                 data_area+(cluster-2)*bytes_per_cluster, 
                 data+(data_size-remaining),
@@ -134,16 +136,15 @@ void fat12_write_cluster_chain(int start_cluster, char* data_area,
             bytes_per_cluster
         );
         remaining -= bytes_per_cluster;
-        printf("c=%u,", cluster);
         cluster = fat12_get_next_cluster(fat, cluster);
-        printf("%u\n", cluster);
     }
 }
+
 void fat12_insert_rootdir_entry(rootdir_entry* root_directory, 
     rootdir_entry* entry, int entry_count) {
     int free_index = -1;
     for (int i = 0; i < entry_count; i++) 
-        if (!root_directory[i].filename[0]){
+        if (!root_directory[i].filename[0]) {
             free_index = i;
             break;
         }
@@ -152,6 +153,7 @@ void fat12_insert_rootdir_entry(rootdir_entry* root_directory,
 
     memcpy(root_directory+free_index, entry, sizeof(rootdir_entry));
 }
+
 void fat12_add_file(char* filename, char* data, 
     size_t data_size, partition* part) {
     bpb16* bpb = (bpb16*)part->partition_buffer;
