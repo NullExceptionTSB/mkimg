@@ -11,10 +11,10 @@
 int fat12_calc_sectors_per_fat(bpb16* bpb) {
     //generic values
     switch (bpb->totalSectors) {
-        case 2880: return 9;
+        //case 2880: return 9;
         //todo: expand
     }
-
+    printf("spc = %u, rs = %u, rde = %u, numfats = %u, total = %u\n", bpb->sectorsPerCluster, bpb->reservedSectors, bpb->rootDirEntries, bpb->numFats, bpb->totalSectors);
     //calculate if undefined
     return fat_calc_spf(12, bpb->sectorsPerCluster, 
         bpb->reservedSectors, bpb->rootDirEntries, bpb->numFats, bpb->totalSectors); //stub
@@ -77,7 +77,7 @@ void fat12_set_bootsect(char* bootsector_data, size_t bssize,
 }
 
 void fat12_format(partition* part, mkimg_args* args) {
-    bpb16* bpb = fat12_write_bpb(part, args->create_fat_small_root);
+    bpb16* bpb = fat12_write_bpb(part, 1||args->create_fat_small_root);
     fat12_puttables(part->partition_buffer + 
         bpb->reservedSectors*bpb->bytesPerSector,
         bpb->sectorsPerFat, bpb->numFats);
