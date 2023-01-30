@@ -9,6 +9,7 @@ static struct argp_option options[] = {
 
     {"create", 'c', 0, 0, "Creates a new image", 0},
     {"add", 'a', 0, 0, "Adds a file", 0},
+    {"write-bootsector", 'b', 0, 0, "Writes bootsector to image", 0},
 
     {"template", 't', "template-num", 0, "Create using template (see man mkimg)"},
     {"cylinders", 'C', "cylinders", 0, "(deprec.) Cylinder count, incompatible with -s, -t", 1},
@@ -61,6 +62,12 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             break;
         case 'h':   
             argp_state_help(state, stdout, 0);
+            break;
+        case 'b':
+            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != setbs)) 
+                puts("W: Mode set twice (assuming first set is desired)");
+            
+            pargs->mode = setbs;
             break;
         case 'c':
             if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != create)) 
@@ -180,6 +187,7 @@ void arg_lint(mkimg_args* args) {
             if (!args->infile)
                 arg_fail("F: No input file specified for add mode");
             break;
+        case setbs: break;
         default:
             arg_fail("F: Specified mode not supported or invalid");            
     }

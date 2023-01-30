@@ -17,6 +17,19 @@ int fat12_calc_sectors_per_fat(bpb16* bpb) {
         bpb->reservedSectors, bpb->rootDirEntries, bpb->numFats, bpb->totalSectors); //stub
 }
 
+int fat12_known_geometry_spt(int sectors) {
+    switch (sectors) {
+        case 2880: return 18;
+    }
+    return 1;
+}
+
+int fat12_known_geometry_heads(int sectors) {
+    if (sectors < 10000)
+        return 2;
+    else return 1;
+}
+
 bpb16* fat12_write_bpb(partition* part, int small_root) {
     bpb16* bpb = malloc(sizeof(bpb16));
     memset(bpb, 0, sizeof(bpb16));
@@ -35,9 +48,9 @@ bpb16* fat12_write_bpb(partition* part, int small_root) {
     bpb->totalSectors = part->partition_size/bpb->bytesPerSector;
     bpb->mediaDescriptor = 0xF8; //todo: decide media descriptor based on pars
     //todo: deprecate CHS completely
-    bpb->sectorsPerTrack = 1; //stub values so wacky bootloaders don't
-    bpb->heads = 1;           //explode due to div0 (normally this is 0
-                              //when unused)
+    bpb->sectorsPerTrack = fat12_known_geometry_spt(bpb->totalSectors);
+    bpb->heads = fat12_known_geometry_heads(bpb->totalSectors);
+
     bpb->hiddenSectors = 0;
     bpb->largeSectors = 0;
 

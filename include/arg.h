@@ -3,7 +3,7 @@
 #include <partition.h>
 
 typedef enum _MKIMG_ARGUMENT_MODE {
-    MODE_UNDECIDED, create, cpfile, rmfile
+    MODE_UNDECIDED, create, cpfile, rmfile, setbs
 } mkimg_mode;
 
 typedef enum _MKIMG_SIZE_MODE {

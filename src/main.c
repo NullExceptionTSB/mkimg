@@ -69,6 +69,32 @@ void mode_add(mkimg_args* args) {
     io_write_file(args->outfile, img->image_buffer, img->image_size);
 }
 
+int mode_setbs(mkimg_args* args) {
+    image* img = image_new();
+    image_load(img, args->outfile);
+
+    if (args->partition_type == PARTTYPE_UNDECIDED)
+        image_detect(img);
+    else img->image_partition_table = args->partition_type;
+
+    mkimg_ptdriver* ptdriver = partition_enum_to_driver(img->image_partition_table);
+    fassert(ptdriver != 0,"F: unsupported partition table");
+    ptdriver->parse(img);
+
+    mkimg_fsdriver* fsdriver = filesystem_enum_to_driver(args->create_desiredfs);
+    fassert(fsdriver != 0, "F: unsupported file system");
+
+    size_t payload_size = 0;
+    char* payload_data = io_read_file(args->infile, 
+        io_get_file_size(args->infile), 
+        &payload_size
+    );
+
+    fsdriver->set_boot_sector(payload_data, 
+        payload_size, &(img->partitions[0]), args->bsnoseek);
+    io_write_file(args->outfile, img->image_buffer, img->image_size);
+}
+
 int main(int argc, char* argv[]) {
     mkimg_args* args = arg_parse(argc, argv);
 
@@ -78,6 +104,9 @@ int main(int argc, char* argv[]) {
             break;
         case cpfile:
             mode_add(args);
+            break;
+        case setbs:
+            mode_setbs(args);
             break;
         default: fail("F: Mode not supported");
     }
