@@ -16,7 +16,8 @@ int fat12_calc_sectors_per_fat(bpb16* bpb) {
     }
 
     //calculate if undefined
-    return -1; //stub
+    return fat_calc_spf(12, bpb->sectorsPerCluster, 
+        bpb->reservedSectors, bpb->rootDirEntries, bpb->numFats, bpb->totalSectors); //stub
 }
 
 bpb16* fat12_write_bpb(partition* part, int small_root) {

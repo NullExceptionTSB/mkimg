@@ -11,14 +11,16 @@ static struct argp_option options[] = {
     {"add", 'a', 0, 0, "Adds a file", 0},
 
     {"template", 't', "template-num", 0, "Create using template (see man mkimg)"},
-    {"cylinders", 'C', "cylinders", 0, "Cylinder count, incompatible with -s, -t", 1},
-    {"heads", 'H', "heads", 0, "Head count, incompatible with -s, -t", 1},
-    {"sectors", 'S', "sectors", 0, "Sectors per cylinder, incompatible with -s, -t", 1},
+    {"cylinders", 'C', "cylinders", 0, "(deprec.) Cylinder count, incompatible with -s, -t", 1},
+    {"heads", 'H', "heads", 0, "(deprec.) Head count, incompatible with -s, -t", 1},
+    {"sectors", 'S', "sectors", 0, "(deprec.) Sectors per cylinder, incompatible with -s, -t", 1},
 
     {"size", 's', "size", 0, "LBA in sectors, incompatible with -C, -H, -S, -t", 2},
 
     {"out", 'o', "outfile", 0, "Output image file. In add mode, specifies image file.", 3},
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
+
+    {"filesystem", 'f', "filesystem", 0, "Create mode: desired filesystem to format the image with. Add mode: explicitly stated filesystem (skip autodetect)", 4},
     
     {"unpartitioned", 'u', 0, 0, "Force mkimg to treat disk image as unpartitioned. Useful for floppy images"},
     {"nobsseek", 'N', 0, 0, "Don't seek over BPB in bootsector files"},
@@ -78,22 +80,34 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
                 arg_fail("F: Invalid template");
             break;
         case 'C':
+            puts("W: Deprecated option -C used");
             if (pargs->create_template)
                 arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
             pargs->create_sz_cylinders = strtol(arg, NULL, 10);
             break;
         case 'H':
+            puts("W: Deprecated option -H used");
             if (pargs->create_template)
                 arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
             pargs->create_sz_heads = strtol(arg, NULL, 10);
             break;
         case 'S':
+            puts("W: Deprecated option -S used");
             if (pargs->create_template)
                 arg_fail("F: Cannot specify -t with other size paramteres");
             arg_delimit_sizemode(CHS, pargs, state);
             pargs->create_sz_spt = strtol(arg, NULL, 10);
+            break;
+        case 'f':
+            if (!strcmp(arg, "FAT12"))
+                pargs->create_desiredfs = FSFAT12;
+            else if (!strcmp(arg, "FAT16"))
+                pargs->create_desiredfs = FSFAT16;
+            else if (!strcmp(arg, "FAT32"))
+                pargs->create_desiredfs = FSFAT32;
+            else arg_fail("F: Invalid or unsupported filesystem");
             break;
         case 's':
             if (pargs->create_template)
@@ -174,8 +188,10 @@ mkimg_args* arg_parse(int argc, char* argv[]) {
     argp_struct->parser = parse_opt;
 
     error_t parsecode = argp_parse(argp_struct, argc, argv, 0, NULL, args);
+    args->create_sz_lba *= 512;
     arg_lint(args);
 
     free(argp_struct);
+    
     return args;
 }
