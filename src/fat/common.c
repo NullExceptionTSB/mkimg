@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <math.h>
 
+#include <fail.h>
+#include <partition.h>
 #include <fs/fat.h>
 
 void fat_relabel(bpb16* bpb, char* newlabel) {
@@ -53,4 +55,20 @@ int fat_calc_spf(int clus_size_bits, int clus_size_sect,
 
     float fat_len = ceil(((num_clus+2)*fat_nybls)/1024);
     return (int)fat_len;
+}
+
+void fat_sync_fats(partition* part, int master) {
+    bpb16* bpb = (bpb16*)part->partition_buffer;
+    if (master >= bpb->numFats) 
+        fail("F: Invalid master FAT selected");
+
+    size_t fatsz_bytes = bpb->sectorsPerFat*bpb->bytesPerSector;
+
+    void* fat_start = part->partition_buffer + 
+        (bpb->reservedSectors * bpb->bytesPerSector);
+    void* fat_master = 
+        fat_start + master*fatsz_bytes;
+
+    for (int i = 0; i < bpb->numFats; i++)
+        memcpy(fat_start + i * fatsz_bytes, fat_master, fatsz_bytes);
 }

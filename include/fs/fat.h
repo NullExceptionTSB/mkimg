@@ -27,13 +27,6 @@ typedef struct _BIOS_PARAMETER_BLOCK {
     char        filesystem[8];
 }bpb16;
 
-typedef struct _FAT12_CLUSTER {
-    uint8_t     even_clust1;
-    uint8_t     even_clust2 : 4;
-    uint8_t     odd_clust1  : 4;
-    uint8_t     odd_clust2;
-}fat12_cluster;
-
 typedef struct _FAT_ROOT_DIR_ENTRY {
     char        filename[8];
     char        extension[3];
@@ -56,3 +49,4 @@ char* fat_new_short_filename(char* long_filename);
 void fat_putdir(char* ptr, int entries);
 int fat_calc_spf(int clus_size_bits, int clus_size_sect, 
     int res_sect, int rootdir_entries, int nfats, int total_sect);
+void fat_sync_fats(partition* part, int master);

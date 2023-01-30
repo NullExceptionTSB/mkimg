@@ -14,10 +14,8 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     mkimg_mode mode;
 
     unsigned char verbose : 1;
-    unsigned char force_unpartitioned : 1;
-    unsigned char force_nofs : 1;
     unsigned char bsnoseek : 1;
-    unsigned char reserved : 4;
+    unsigned char reserved : 6;
 
     char* outfile;
     char* infile;
@@ -30,7 +28,7 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     int create_sz_lba;
     mkimg_sizemode create_sizemode;
     mkimg_filesystem create_desiredfs;
-    mkimg_parttype create_desiredparttype;
+    mkimg_parttype partition_type;
 
 } mkimg_args;
 

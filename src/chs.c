@@ -7,9 +7,10 @@
 
 chs chs_lba_to_chs_size(size_t sz)  {
     chs r;
-    r.spt = (sz>=63)?63:sz;
-    r.head = ((sz/r.spt)>=16)?16:((sz/r.spt)?(sz/r.spt):1);
-    r.cylinder = ceil(((float)sz)/(r.spt*r.head));
+    size_t s = sz/512;
+    r.spt = (s>=63)?63:s;
+    r.head = ((s/r.spt)>=16)?16:((s/r.spt)?(s/r.spt):1);
+    r.cylinder = ceil(((float)s)/(r.spt*r.head));
     return r;
 }
 

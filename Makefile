@@ -6,7 +6,7 @@ EXECNAME = mkimg
 
 all: build mbr $(EXECNAME)
 	
-$(EXECNAME): build/arg.o build/chs.o build/defaults.o build/filesystem.o build/image.o build/io.o build/main.o build/partition.o build/part_mbr.o build/part_unpart.o build/fat12.o build/fat_common.o
+$(EXECNAME): build/arg.o build/chs.o build/defaults.o build/fail.o build/filesystem.o build/image.o build/io.o build/main.o build/partition.o build/part_mbr.o build/part_unpart.o build/fat12.o build/fat_common.o
 	$(LD) build/*.o -lm -o $(EXECNAME)
 
 build/arg.o: src/arg.c
@@ -15,6 +15,8 @@ build/chs.o: src/chs.c
 	$(CC) $(CCARGS) src/chs.c -o build/chs.o
 build/defaults.o: src/defaults.c
 	$(CC) $(CCARGS) src/defaults.c -o build/defaults.o
+build/fail.o: src/fail.c
+	$(CC) $(CCARGS) src/fail.c -o build/fail.o
 build/filesystem.o: src/filesystem.c
 	$(CC) $(CCARGS) src/filesystem.c -o build/filesystem.o
 build/image.o: src/image.c

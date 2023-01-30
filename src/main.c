@@ -6,15 +6,11 @@
 #include <driver/fsdriver.h>
 #include <driver/ptdriver.h>
 
-#include <io.h>
 #include <arg.h>
-#include <image.h>
 #include <defaults.h>
-
-void fail(char* msg) {
-    puts(msg);
-    exit(-1);
-}
+#include <fail.h>
+#include <io.h>
+#include <image.h>
 
 void mode_create(mkimg_args* args) {
     image* img = image_new();
@@ -27,24 +23,48 @@ void mode_create(mkimg_args* args) {
         chssz.spt = args->create_sz_spt;
         image_new_buffer_chs(img, chssz);
     }
-    image_detect_ex(img, args->force_unpartitioned);
+    image_detect_ex(img, args->partition_type == PARTTYPE_NONE);
     
-    img->image_partition_table = args->force_unpartitioned ?
-        PARTTYPE_NONE :
-        args->create_desiredparttype;
+    img->image_partition_table = args->partition_type;
+
     img->image_template = args->create_template;
 
     mkimg_ptdriver* ptdriver = partition_enum_to_driver(img->image_partition_table);
-    if (!ptdriver) 
-        fail("F: unsupported partition table");
+    fassert(ptdriver != 0,"F: unsupported partition table");
+
     ptdriver->init(img);
     if (ptdriver->add) ptdriver->add(img, 0, -1);
 
     mkimg_fsdriver* fsdriver = filesystem_enum_to_driver(args->create_desiredfs);
-    if (!fsdriver)
-        fail("F: unsupported file system");
+    fassert(fsdriver != 0, "F: unsupported file system");
 
     fsdriver->format(img->partitions, args);
+
+    io_write_file(args->outfile, img->image_buffer, img->image_size);
+}
+
+void mode_add(mkimg_args* args) {
+    image* img = image_new();
+    image_load(img, args->outfile);
+
+    if (args->partition_type == PARTTYPE_UNDECIDED)
+        image_detect(img);
+    else img->image_partition_table = args->partition_type;
+
+    mkimg_ptdriver* ptdriver = partition_enum_to_driver(img->image_partition_table);
+    fassert(ptdriver != 0,"F: unsupported partition table");
+    ptdriver->parse(img);
+
+    mkimg_fsdriver* fsdriver = filesystem_enum_to_driver(args->create_desiredfs);
+    fassert(fsdriver != 0, "F: unsupported file system");
+
+    size_t payload_size = 0;
+    char* payload_data = io_read_file(args->infile, 
+        io_get_file_size(args->infile), 
+        &payload_size
+    );
+    
+    fsdriver->add_file(args->infile, payload_data, payload_size, &(img->partitions[0]));
 
     io_write_file(args->outfile, img->image_buffer, img->image_size);
 }
@@ -57,7 +77,7 @@ int main(int argc, char* argv[]) {
             mode_create(args);
             break;
         case cpfile:
-            //mode_add(args);
+            mode_add(args);
             break;
         default: fail("F: Mode not supported");
     }

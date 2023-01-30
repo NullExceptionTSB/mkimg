@@ -7,7 +7,7 @@
 #include <filesystem.h>
 
 typedef void(*fs_add_file_proc)(char* filename, char* data,
-    size_t data_size, image* img);
+    size_t data_size, partition* part);
 typedef void(*fs_format_proc)(partition* img, mkimg_args* args);
 typedef void(*fs_set_boot_sector_proc)(char* bootsector_data, size_t bssize,
     partition* part, int seek_sector);

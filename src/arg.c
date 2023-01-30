@@ -21,8 +21,8 @@ static struct argp_option options[] = {
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
 
     {"filesystem", 'f', "filesystem", 0, "Create mode: desired filesystem to format the image with. Add mode: explicitly stated filesystem (skip autodetect)", 4},
+    {"ptformat", 'p', "partition-table-format", 0, "Create mode: desired partition table to use for image (default: NONE). Add mode: explicitly stated partition table (skip autodetect)"},
     
-    {"unpartitioned", 'u', 0, 0, "Force mkimg to treat disk image as unpartitioned. Useful for floppy images"},
     {"nobsseek", 'N', 0, 0, "Don't seek over BPB in bootsector files"},
 
     {0}
@@ -46,7 +46,7 @@ int arg_process_template(mkimg_args* pargs, int template) {
             pargs->create_sz_lba = 2880*512;
             pargs->create_sizemode = CHS;
             pargs->create_desiredfs = FSFAT12;
-            pargs->force_unpartitioned = 1;
+            pargs->partition_type = PARTTYPE_NONE;
             return 1;
         default: return 0;
     }
@@ -109,6 +109,14 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
                 pargs->create_desiredfs = FSFAT32;
             else arg_fail("F: Invalid or unsupported filesystem");
             break;
+        case 'p':
+            if (!strcmp(arg, "NONE")) 
+                pargs->partition_type = PARTTYPE_NONE;
+            else if (!strcmp(arg, "MBR"))
+                pargs->partition_type = PARTTYPE_MBR;
+            else if (!strcmp(arg, "GPT"))
+                pargs->partition_type = PARTTYPE_GPT;
+            break;
         case 's':
             if (pargs->create_template)
                 arg_fail("F: Cannot specify -t with other size paramteres");
@@ -122,9 +130,6 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
         case 'i':
             pargs->infile = malloc(strlen(arg)+1);
             strcpy(pargs->infile, arg);
-            break;
-        case 'u':
-            pargs->force_unpartitioned = 1;
             break;
         case 'N':
             pargs->bsnoseek = 1;
@@ -163,6 +168,9 @@ void arg_lint(mkimg_args* args) {
                         arg_fail("F: Disk size is not a multiple of 1 sector (512 bytes)");
                     break;
             }
+            if (!args->partition_type)
+                args->partition_type = PARTTYPE_NONE;
+
             if (!args->outfile)
                 arg_fail("F: No output file specified for create mode");
             break;
