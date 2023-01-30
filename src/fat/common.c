@@ -53,5 +53,4 @@ int fat_calc_spf(int clus_size_bits, int clus_size_sect,
 
     float fat_len = ceil(((num_clus+2)*fat_nybls)/1024);
     return (int)fat_len;
-    
 }
