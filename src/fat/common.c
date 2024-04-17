@@ -17,14 +17,18 @@ void fat_relabel(bpb16* bpb, char* newlabel) {
 }
 
 char* fat_new_short_filename(char* long_filename) {
+    //this is kinda icky
+    char* lfn = strrchr(long_filename, '/')+1;
+    if (lfn == NULL) lfn = long_filename;
+
     char* sfn = malloc(11);
     memset(sfn, ' ', 11);
 
     //calculate length of name portion
     size_t fn_len, ex_len;
-    for (fn_len = 0; fn_len < strlen(long_filename); fn_len++) 
-        if (long_filename[fn_len]=='.') break;
-    ex_len = strlen(long_filename) - fn_len - 1;
+    for (fn_len = 0; fn_len < strlen(lfn); fn_len++) 
+        if (lfn[fn_len]=='.') break;
+    ex_len = strlen(lfn) - fn_len - 1;
     
     //take max first 8 chars of filename and 3 chars of extension
 
@@ -32,10 +36,10 @@ char* fat_new_short_filename(char* long_filename) {
     ex_len = (3>=ex_len?ex_len:3);
 
     for (int i = 0; i < fn_len; i++) 
-        sfn[i] = toupper(long_filename[i]);
+        sfn[i] = toupper(lfn[i]);
     
     for (int i = 0; i < ex_len; i++)
-        sfn[8+i] = toupper(long_filename[fn_len+1+i]);
+        sfn[8+i] = toupper(lfn[fn_len+1+i]);
     return sfn;
 }
 

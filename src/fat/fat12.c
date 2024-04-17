@@ -170,13 +170,13 @@ void fat12_insert_rootdir_entry(rootdir_entry* root_directory,
 void fat12_add_file(char* filename, char* data, 
     size_t data_size, partition* part) {
     bpb16* bpb = (bpb16*)part->partition_buffer;
-
+    
     char* pfat = (char*)(part->partition_buffer + 
         bpb->reservedSectors * bpb->bytesPerSector);
     char* prootdir = pfat + 
         bpb->numFats * bpb->sectorsPerFat * bpb->bytesPerSector;
     char* pdata = prootdir + bpb->rootDirEntries*32; 
-
+    
     int cluster_count = data_size / 
         (bpb->sectorsPerCluster*bpb->bytesPerSector);
     if (data_size % (bpb->sectorsPerCluster*bpb->bytesPerSector)) 
@@ -187,19 +187,19 @@ void fat12_add_file(char* filename, char* data,
         cluster_count,
         ((bpb->sectorsPerFat*bpb->bytesPerSector)/3)*2
     );
-
+    
     fassert(start_cluster, "F: Drive full");
     
     fat12_write_cluster_chain(start_cluster, pdata, 
         data, (fat12_cluster*)pfat, data_size, 
         bpb->sectorsPerCluster * bpb->bytesPerSector);
-
+    
     fat_sync_fats(part, 0);
-
+    
     rootdir_entry* entry = malloc(sizeof(rootdir_entry));
     memset(entry, 0, sizeof(rootdir_entry));
     char* sfn = fat_new_short_filename(filename);
-
+    
     memcpy(entry->filename, sfn, 11);
     entry->file_size = data_size;
     entry->start_cluster = start_cluster;
