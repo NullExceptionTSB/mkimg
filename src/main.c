@@ -5,6 +5,7 @@
 #include <filesystem.h>
 #include <driver/fsdriver.h>
 #include <driver/ptdriver.h>
+#include <script/scriptmain.h>
 
 #include <arg.h>
 #include <defaults.h>
@@ -95,18 +96,25 @@ int mode_setbs(mkimg_args* args) {
     io_write_file(args->outfile, img->image_buffer, img->image_size);
 }
 
+int mode_script(mkimg_args* args) {
+    script_main(args);
+}
+
 int main(int argc, char* argv[]) {
     mkimg_args* args = arg_parse(argc, argv);
 
     switch (args->mode) {
-        case create:
+        case MODE_CREATE:
             mode_create(args);
             break;
-        case cpfile:
+        case MODE_CPFILE:
             mode_add(args);
             break;
-        case setbs:
+        case MODE_SETBS:
             mode_setbs(args);
+            break;
+        case MODE_SCRIPT:
+            mode_script(args);
             break;
         default: fail("F: Mode not supported");
     }

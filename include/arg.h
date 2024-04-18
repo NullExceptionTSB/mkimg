@@ -3,7 +3,11 @@
 #include <partition.h>
 
 typedef enum _MKIMG_ARGUMENT_MODE {
-    MODE_UNDECIDED, create, cpfile, rmfile, setbs
+    MODE_UNDECIDED, 
+    MODE_CREATE, 
+    MODE_CPFILE, MODE_RMFILE, 
+    MODE_SETBS,
+    MODE_SCRIPT
 } mkimg_mode;
 
 typedef enum _MKIMG_SIZE_MODE {
@@ -29,6 +33,8 @@ typedef struct _MKIMG_ARGUMENT_STRUCT {
     mkimg_sizemode create_sizemode;
     mkimg_filesystem create_desiredfs;
     mkimg_parttype partition_type;
+
+    char* scriptfile;
 
 } mkimg_args;
 

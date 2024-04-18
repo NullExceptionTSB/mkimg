@@ -10,8 +10,9 @@ static struct argp_option options[] = {
     {"create", 'c', 0, 0, "Creates a new image", 0},
     {"add", 'a', 0, 0, "Adds a file", 0},
     {"write-bootsector", 'b', 0, 0, "Writes bootsector to image", 0},
+    {"script", 'T', "scriptfile", 0, "Run a mkimg script", 0},
 
-    {"template", 't', "template-num", 0, "Create using template (see man mkimg)"},
+    {"template", 't', "template-num", 0, "Create using template (see man mkimg)", 1},
     {"cylinders", 'C', "cylinders", 0, "(deprec.) Cylinder count, incompatible with -s, -t", 1},
     {"heads", 'H', "heads", 0, "(deprec.) Head count, incompatible with -s, -t", 1},
     {"sectors", 'S', "sectors", 0, "(deprec.) Sectors per cylinder, incompatible with -s, -t", 1},
@@ -22,7 +23,7 @@ static struct argp_option options[] = {
     {"in", 'i', "infile", 0, "Input image file, mandatory for add mode. In create mode, specifies stage 1 bootloader binary file.", 3},
 
     {"filesystem", 'f', "filesystem", 0, "Create mode: desired filesystem to format the image with. Add mode: explicitly stated filesystem (skip autodetect)", 4},
-    {"ptformat", 'p', "partition-table-format", 0, "Create mode: desired partition table to use for image (default: NONE). Add mode: explicitly stated partition table (skip autodetect)"},
+    {"ptformat", 'p', "partition-table-format", 0, "Create mode: desired partition table to use for image (default: NONE). Add mode: explicitly stated partition table (skip autodetect)", 4},
     
     {"nobsseek", 'N', 0, 0, "Don't seek over BPB in bootsector files"},
 
@@ -53,6 +54,12 @@ int arg_process_template(mkimg_args* pargs, int template) {
     }
 }
 
+void arg_setmode(mkimg_mode mode, mkimg_args* pargs) {
+    if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != mode)) 
+        puts("W: Mode set twice (assuming last mode specified is desired)");
+    pargs->mode = mode;
+}
+
 static error_t parse_opt(int key, char* arg, struct argp_state* state) {
     mkimg_args* pargs = state->input;
     
@@ -60,26 +67,23 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
         case 'v':
             pargs->verbose = 1;
             break;
+
         case 'h':   
             argp_state_help(state, stdout, 0);
             break;
         case 'b':
-            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != setbs)) 
-                puts("W: Mode set twice (assuming first set is desired)");
-            
-            pargs->mode = setbs;
+            arg_setmode(MODE_SETBS, pargs);
             break;
         case 'c':
-            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != create)) 
-                puts("W: Mode set twice (assuming first set is desired)");
-            
-            pargs->mode = create;
+            arg_setmode(MODE_CREATE, pargs);
             break;
         case 'a':
-            if ((pargs->mode != MODE_UNDECIDED) && (pargs->mode != cpfile)) 
-                puts("W: Mode set twice (assuming first set is desired)");
-
-            pargs->mode = cpfile;
+            arg_setmode(MODE_CPFILE, pargs);
+            break;
+        case 'T':
+            arg_setmode(MODE_SCRIPT, pargs);
+            pargs->scriptfile = malloc(strlen(arg)+1);
+            strcpy(pargs->scriptfile, arg);        
             break;
         case 't':
             pargs->create_template = 1;
@@ -158,7 +162,7 @@ void arg_fail(char* msg) {
 
 void arg_lint(mkimg_args* args) {
     switch(args->mode) {
-        case create:
+        case MODE_CREATE:
             switch(args->create_sizemode) {
                 case SIZEMODE_UNDECIDED:
                     arg_fail("F: Size not specified");
@@ -181,13 +185,14 @@ void arg_lint(mkimg_args* args) {
             if (!args->outfile)
                 arg_fail("F: No output file specified for create mode");
             break;
-        case cpfile:
+        case MODE_CPFILE:
             if(!args->outfile)
                 arg_fail("F: No image file specified for add mode");
             if (!args->infile)
                 arg_fail("F: No input file specified for add mode");
             break;
-        case setbs: break;
+        case MODE_SETBS: break;
+        case MODE_SCRIPT: break;
         default:
             arg_fail("F: Specified mode not supported or invalid");            
     }
